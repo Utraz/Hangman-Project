@@ -1,3 +1,5 @@
+# milestone_2.py
+
 import random
 
 def choose_random_word(word_list):
