@@ -12,15 +12,15 @@ class Hangman:
             num_lives (int): The number of lives the player has at the start of the game (default is 5).
         """
         self.word_list = word_list
-        self.secret_word = random.choice(word_list)  # Pick a random word from the word list
-        self.guessed_word = ['_' for _ in self.secret_word]  # Initialize the guessed word with underscores
-        self.remaining_unique_letters = len(set(self.secret_word))  # Count unique letters in the word
-        self.remaining_lives = num_lives  # Set the number of lives
-        self.guessed_letters = []  # List to store guesses already made
+        self.secret_word = random.choice(word_list)
+        self.guessed_word = ['_' for _ in self.secret_word]
+        self.remaining_unique_letters = len(set(self.secret_word))
+        self.remaining_lives = num_lives
+        self.guessed_letters = []
 
-    def update_guessed_word(self, letter):
+    def _update_guessed_word(self, letter):
         """
-        Update the guessed word with the correctly guessed letter.
+        Private method to update the guessed word with the correctly guessed letter.
 
         Args:
             letter (str): The correctly guessed letter.
@@ -29,52 +29,78 @@ class Hangman:
             if char == letter:
                 self.guessed_word[index] = letter
 
-    def check_guess(self, letter):
+    def _process_correct_guess(self, letter):
+        """
+        Handles the scenario when the guessed letter is correct.
+
+        Args:
+            letter (str): The correctly guessed letter.
+        """
+        print(f"Good guess! '{letter}' is in the word.")
+        self._update_guessed_word(letter)
+        self.remaining_unique_letters -= 1
+
+    def _process_incorrect_guess(self, letter):
+        """
+        Handles the scenario when the guessed letter is incorrect.
+
+        Args:
+            letter (str): The incorrectly guessed letter.
+        """
+        print(f"Sorry, '{letter}' is not in the word. Try again.")
+        self.remaining_lives -= 1
+
+    def _check_guess(self, letter):
         """
         Check if the guessed letter is in the word and update the game state.
 
         Args:
             letter (str): The guessed letter.
         """
-        letter = letter.lower()  # Ensure the guess is in lowercase
-
         if letter in self.secret_word:
-            print(f"Good guess! '{letter}' is in the word.")
-            self.update_guessed_word(letter)  # Update the guessed_word list
-            self.remaining_unique_letters -= 1  # Decrease unique letters count
+            self._process_correct_guess(letter)
         else:
-            print(f"Sorry, '{letter}' is not in the word. Try again.")
-            self.remaining_lives -= 1  # Decrease lives if the guess is incorrect
-            
-        # Print the number of lives left
+            self._process_incorrect_guess(letter)
         print(f"You have {self.remaining_lives} lives left.")
 
-    def get_user_input(self):
+    def _get_valid_input(self):
         """
         Continuously prompts the user for a valid single letter input.
-        
+
         Returns:
-            str: A single valid letter.
+            str: A valid lowercase letter.
         """
         while True:
-            user_input = input("Please enter a single letter: ")
+            user_input = input("Please enter a single letter: ").lower()
             if len(user_input) == 1 and user_input.isalpha():
-                return user_input.lower()  # Return valid input in lowercase
+                return user_input
             else:
                 print("Invalid input. Please enter a single alphabetical character.")
+
+    def _is_repeated_guess(self, guess):
+        """
+        Check if the guessed letter has already been guessed.
+
+        Args:
+            guess (str): The letter guessed by the player.
+
+        Returns:
+            bool: True if the letter has been guessed before, False otherwise.
+        """
+        return guess in self.guessed_letters
 
     def play_round(self):
         """
         Plays one round of the game by asking the user for input and processing the guess.
         """
         print(f"\nCurrent word: {' '.join(self.guessed_word)}")
-        guess = self.get_user_input()  # Get a valid guess from the user
+        guess = self._get_valid_input()
 
-        if guess in self.guessed_letters:
+        if self._is_repeated_guess(guess):
             print(f"You've already guessed '{guess}'. Try again.")
         else:
-            self.guessed_letters.append(guess)  # Add the guess to the list
-            self.check_guess(guess)  # Check if the guess is correct
+            self.guessed_letters.append(guess)
+            self._check_guess(guess)
 
 
 def play_game(word_list):
@@ -84,24 +110,17 @@ def play_game(word_list):
     Args:
         word_list (list): The list of possible words to guess.
     """
-    num_lives = 5  # Set number of lives
-    game = Hangman(word_list, num_lives)  # Instantiate the Hangman game
+    game = Hangman(word_list)
 
-    # Loop to control the flow of the game
-    while True:
-        if game.remaining_lives == 0:
-            print('You lost!')
-            break  # End the game if no lives are left
+    while game.remaining_lives > 0 and game.remaining_unique_letters > 0:
+        game.play_round()
 
-        if game.remaining_unique_letters > 0:
-            game.play_round()  # Continue the game and ask for input
-        else:
-            print('Congratulations. You won the game!')
-            break  # End the game if all letters have been guessed
+    if game.remaining_lives == 0:
+        print('You lost!')
+    else:
+        print('Congratulations. You won the game!')
 
 
-# Run the game
 if __name__ == "__main__":
-    words = ["apple", "banana", "cherry", "date", "elderberry"]
-    play_game(words)
-
+    word_list = ["apple", "banana", "cherry", "date", "elderberry"]
+    play_game(word_list)
